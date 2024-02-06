@@ -28,6 +28,7 @@ func restServer(cmd *cobra.Command, args []string) {
 		AllowHeaders: []string{""},
 	}))
 	routh.RouthSample(e, sampleHandler)
+	routh.RouthDummyServer(e, dummyServerHandler)
 	err := e.Start(rootConfig.Server.HostServer + ":" + rootConfig.Server.PortServer)
 	if err != nil {
 		log.Errorf("Cannot Start the application !!, Err > ", err)

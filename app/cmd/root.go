@@ -2,6 +2,7 @@ package cmd
 
 import (
 	config "dummy-server/connfig"
+	"dummy-server/module/dummyServer"
 	"dummy-server/module/sample"
 	"fmt"
 	"os"
@@ -19,9 +20,10 @@ var (
 	}
 )
 var (
-	rootConfig    *config.Root
-	database      *sqlx.DB
-	sampleHandler sample.Handler
+	rootConfig         *config.Root
+	database           *sqlx.DB
+	sampleHandler      sample.Handler
+	dummyServerHandler dummyServer.Handler
 )
 
 func Execute() {
@@ -34,6 +36,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(func() {
 		configReader()
+		initPostgres()
 		initApp()
 	})
 }
@@ -43,6 +46,7 @@ func configReader() {
 }
 func initApp() {
 	initSample()
+	initDummyServer()
 
 }
 func initSample() {
@@ -52,4 +56,29 @@ func initSample() {
 	controller := sample.NewController(service)
 	sampleHandler = sample.NewHandler(controller)
 
+}
+func initPostgres() {
+	log.Infof("Initialize postgress")
+	var err error
+	database, err = config.OpenPostgresDatabaseConnection(config.Postgres{
+		Host:                  rootConfig.Postgres.Host,
+		Port:                  rootConfig.Postgres.Port,
+		User:                  rootConfig.Postgres.User,
+		Password:              rootConfig.Postgres.Password,
+		Dbname:                rootConfig.Postgres.Dbname,
+		MaxConnectionLifetime: rootConfig.Postgres.MaxConnectionLifetime,
+		MaxOpenConnection:     rootConfig.Postgres.MaxOpenConnection,
+		MaxIdleConnection:     rootConfig.Postgres.MaxIdleConnection,
+	})
+	if err != nil {
+		log.Errorf("Posgress failed, error: ", err)
+	}
+}
+
+func initDummyServer() {
+	log.Infof("Initialize dammyServer module")
+	repo := dummyServer.NewRepository(database)
+	service := dummyServer.NewService(repo)
+	controller := dummyServer.NewController(service)
+	dummyServerHandler = dummyServer.NewHandler(controller)
 }

@@ -7,7 +7,8 @@ import (
 )
 
 type Root struct {
-	Server Server
+	Server   Server
+	Postgres Postgres
 }
 
 func Load(filenames ...string) *Root {
@@ -16,9 +17,11 @@ func Load(filenames ...string) *Root {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 	r := Root{
-		Server: Server{},
+		Server:   Server{},
+		Postgres: Postgres{},
 	}
 	mustLoad("SERVER", &r.Server)
+	mustLoad("POSTGRES", &r.Postgres)
 	return &r
 }
 
