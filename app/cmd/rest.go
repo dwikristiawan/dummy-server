@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"dummy-server/routh"
+	"mocking-server/routh"
 	"os"
 
 	"github.com/labstack/echo/v4"
@@ -28,7 +28,8 @@ func restServer(cmd *cobra.Command, args []string) {
 		AllowHeaders: []string{""},
 	}))
 	routh.RouthSample(e, sampleHandler)
-	routh.RouthDummyServer(e, dummyServerHandler)
+	//routh.RouthDummyServer(e, dummyServerHandler)
+	routh.RouthProfile(e, authHandler)
 	err := e.Start(rootConfig.Server.HostServer + ":" + rootConfig.Server.PortServer)
 	if err != nil {
 		log.Errorf("Cannot Start the application !!, Err > ", err)
