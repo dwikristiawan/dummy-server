@@ -1,10 +1,13 @@
 package cmd
 
 import (
-	config "dummy-server/connfig"
-	"dummy-server/module/dummyServer"
-	"dummy-server/module/sample"
+	"mocking-server/config"
+
 	"fmt"
+	"mocking-server/internal/auth"
+	"mocking-server/internal/repository/postgres/users"
+	"mocking-server/internal/sample"
+	"mocking-server/internal/service/users_svc"
 	"os"
 
 	"github.com/jmoiron/sqlx"
@@ -20,10 +23,11 @@ var (
 	}
 )
 var (
-	rootConfig         *config.Root
-	database           *sqlx.DB
-	sampleHandler      sample.Handler
-	dummyServerHandler dummyServer.Handler
+	rootConfig    *config.Root
+	database      *sqlx.DB
+	sampleHandler sample.Handler
+	//dummyServerHandler dummyServer.Handler
+	authHandler auth.AuthHandler
 )
 
 func Execute() {
@@ -46,7 +50,8 @@ func configReader() {
 }
 func initApp() {
 	initSample()
-	initDummyServer()
+	//initDummyServer()
+	initAuth()
 
 }
 func initSample() {
@@ -75,10 +80,18 @@ func initPostgres() {
 	}
 }
 
-func initDummyServer() {
-	log.Infof("Initialize dammyServer module")
-	repo := dummyServer.NewRepository(database)
-	service := dummyServer.NewService(repo)
-	controller := dummyServer.NewController(service)
-	dummyServerHandler = dummyServer.NewHandler(controller)
+// func initDummyServer() {
+// 	log.Infof("Initialize dammyServer module")
+// 	repo := dummyServer.NewRepository(database)
+// 	service := dummyServer.NewService(repo)
+// 	controller := dummyServer.NewController(service)
+// 	dummyServerHandler = dummyServer.NewHandler(controller)
+// }
+
+func initAuth() {
+	log.Infof("Initialize auth")
+	repo := users.NewRepository(database)
+	service := users_svc.NewService(*repo)
+	ctr := auth.NewAuthController(service)
+	authHandler = auth.NewAuthHandler(*ctr)
 }
