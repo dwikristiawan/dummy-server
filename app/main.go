@@ -1,14 +1,12 @@
 package main
 
 import (
-	"dummy-server/app/cmd"
 	"fmt"
-	
+	"mocking-server/app/cmd"
 )
 
 func main() {
 	fmt.Println("exe")
 	cmd.Execute()
-	
 
 }

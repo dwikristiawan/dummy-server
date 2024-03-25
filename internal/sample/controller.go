@@ -2,7 +2,7 @@ package sample
 
 import (
 	"context"
-	"dummy-server/utils"
+	"mocking-server/utils"
 )
 
 type controller struct {
