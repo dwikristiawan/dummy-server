@@ -36,3 +36,10 @@ func ErrorServerRequest(err error) *BaseResponse {
 		Data:         nil,
 	}
 }
+func ErrorForbiden(err error) *BaseResponse {
+	return &BaseResponse{
+		ResponseCode: http.StatusForbidden,
+		Massage:      err.Error(),
+		Data:         nil,
+	}
+}

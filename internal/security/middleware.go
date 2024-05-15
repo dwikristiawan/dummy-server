@@ -2,6 +2,7 @@ package security
 
 import (
 	"context"
+	"mocking-server/config"
 	"mocking-server/internal"
 	"mocking-server/utils"
 
@@ -9,11 +10,15 @@ import (
 )
 
 type middlewareService struct {
-	Jwt JwtService
+	Jwt        JwtService
+	rootConfig *config.Root
 }
 
-func NewMiddlewareService(Jwt JwtService) MiddlewareService {
-	return &middlewareService{Jwt: Jwt}
+func NewMiddlewareService(Jwt JwtService, rootConfig *config.Root) MiddlewareService {
+	return &middlewareService{
+		Jwt:        Jwt,
+		rootConfig: rootConfig,
+	}
 }
 
 type MiddlewareService interface {
@@ -31,7 +36,7 @@ func (svc middlewareService) MiddlewareSecurity(role *map[string]interface{}) ec
 					Data:         nil,
 				})
 			}
-			token, err := svc.Jwt.ParseJwt(c.Request().Context(), &jwtRequest)
+			token, err := svc.Jwt.ParseJwt(c.Request().Context(), &jwtRequest, []byte(svc.rootConfig.Jwt.SecretKey))
 			if err != nil || !token.Valid {
 				c.JSON(echo.ErrUnauthorized.Code, utils.BaseResponse{
 					ResponseCode: echo.ErrUnauthorized.Code,

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"mocking-server/config"
+	"time"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/gommon/log"
@@ -19,9 +20,9 @@ func NewJwtService(RootConfig *config.Root) JwtService {
 }
 
 type JwtService interface {
-	generateToken(context.Context, *JwtCustomClaims, *[]byte) (string, error)
+	generateToken(context.Context, *JwtCustomClaims, *[]byte, time.Duration) (string, error)
 	CreateTokens(context.Context, *JwtCustomClaims) (*Tokens, error)
-	ParseJwt(context.Context, *string) (*jwt.Token, error)
+	ParseJwt(context.Context, *string, []byte) (*jwt.Token, error)
 	JwtClaim(context.Context, *jwt.Token) (*JwtCustomClaims, error)
 }
 
@@ -38,7 +39,7 @@ type Tokens struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-func (svc *jwtService) generateToken(c context.Context, user *JwtCustomClaims, key *[]byte) (string, error) {
+func (svc *jwtService) generateToken(c context.Context, user *JwtCustomClaims, key *[]byte, expire time.Duration) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["uuid"] = user.Uuid
@@ -46,7 +47,7 @@ func (svc *jwtService) generateToken(c context.Context, user *JwtCustomClaims, k
 	claims["username"] = user.Username
 	claims["name"] = user.Name
 	claims["role"] = user.Roles
-	claims["exp"] = svc.RootConfig.Jwt.Expiration
+	claims["exp"] = expire
 	tokenString, err := token.SignedString(*key)
 	if err != nil {
 		log.Errorf("generateToken.token.SignedString Err: %v", err)
@@ -58,12 +59,20 @@ func (svc *jwtService) generateToken(c context.Context, user *JwtCustomClaims, k
 func (svc jwtService) CreateTokens(c context.Context, user *JwtCustomClaims) (*Tokens, error) {
 	byteSecretKey := []byte(svc.RootConfig.Jwt.RefreshKey)
 	byteRefreshKey := []byte(svc.RootConfig.Jwt.RefreshKey)
-	accessToken, err := svc.generateToken(c, user, &byteSecretKey)
+	duration, err := time.ParseDuration(svc.RootConfig.Jwt.Expiration)
+	if err != nil {
+		return nil, err
+	}
+	reDuration, err := time.ParseDuration(svc.RootConfig.Jwt.ReExpiration)
+	if err != nil {
+		return nil, err
+	}
+	accessToken, err := svc.generateToken(c, user, &byteSecretKey, duration)
 	if err != nil {
 		log.Errorf("CreateTokens.svc.generateToken Err: %v", err)
 		return nil, err
 	}
-	refreshToken, err := svc.generateToken(c, user, &byteRefreshKey)
+	refreshToken, err := svc.generateToken(c, user, &byteRefreshKey, reDuration)
 	if err != nil {
 		log.Errorf("CreateTokens.svc.generateToken Err: %v", err.Error())
 		return nil, err
@@ -71,12 +80,12 @@ func (svc jwtService) CreateTokens(c context.Context, user *JwtCustomClaims) (*T
 	return &Tokens{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
 
-func (svc jwtService) ParseJwt(c context.Context, strJwt *string) (*jwt.Token, error) {
+func (svc jwtService) ParseJwt(c context.Context, strJwt *string, key []byte) (*jwt.Token, error) {
 	token, err := jwt.Parse(*strJwt, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
-		return []byte(svc.RootConfig.Jwt.SecretKey), nil
+		return key, nil
 	})
 	if err != nil {
 		log.Errorf("ParseJwt Err: %v", err)
