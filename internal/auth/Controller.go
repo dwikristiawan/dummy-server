@@ -4,7 +4,6 @@ import (
 	"errors"
 	"mocking-server/internal/dto/auth_dto"
 	"mocking-server/internal/model"
-	"mocking-server/internal/security"
 	"mocking-server/internal/service/users_svc"
 	"mocking-server/utils"
 
@@ -12,20 +11,19 @@ import (
 	"golang.org/x/net/context"
 )
 
-type authController struct {
+type controller struct {
 	service users_svc.Service
 }
-
-func NewAuthController(service users_svc.Service) *authController {
-	return &authController{service: service}
+type Controller interface {
+	RegisterController(context.Context, *auth_dto.RegisterRequest) *utils.BaseResponse
+	LoginController(context.Context, *auth_dto.LoginRequest) *utils.BaseResponse
 }
 
-type AuthController interface {
-	Register(context.Context, *auth_dto.RegisterRequest) *utils.BaseResponse
-	Login(context.Context, *auth_dto.LoginRequest) *utils.BaseResponse
+func NewController(svc users_svc.Service) Controller {
+	return &controller{service: svc}
 }
 
-func (ctr authController) Register(c context.Context, req *auth_dto.RegisterRequest) *utils.BaseResponse {
+func (ctr controller) RegisterController(c context.Context, req *auth_dto.RegisterRequest) *utils.BaseResponse {
 	var errstr = ""
 	if req.Username == "" {
 		errstr = " username "
@@ -41,10 +39,15 @@ func (ctr authController) Register(c context.Context, req *auth_dto.RegisterRequ
 		log.Errorf("Err Register Err > %v", err)
 		return utils.BadRequest(err)
 	}
-	err := ctr.service.InsertService(c, &model.Users{
-		Username: req.Username,
-		Name:     req.Name,
-		Password: req.Password,
+	err := ctr.service.AddUserService(c, &model.Users{
+		Id:        "",
+		Username:  req.Username,
+		Name:      req.Name,
+		Password:  req.Password,
+		Roles:     nil,
+		Status:    "",
+		CreatedAt: nil,
+		UpdatedAt: nil,
 	})
 	if err != nil {
 		return utils.BadRequest(err)
@@ -52,7 +55,7 @@ func (ctr authController) Register(c context.Context, req *auth_dto.RegisterRequ
 	return utils.SuccessRequest(nil)
 }
 
-func (ctr authController) Login(c context.Context, req *auth_dto.LoginRequest) *utils.BaseResponse {
+func (ctr controller) LoginController(c context.Context, req *auth_dto.LoginRequest) *utils.BaseResponse {
 	var errstr = ""
 	if req.Username == "" {
 		errstr = " username "
@@ -66,22 +69,11 @@ func (ctr authController) Login(c context.Context, req *auth_dto.LoginRequest) *
 		return utils.BadRequest(err)
 	}
 
-	users, err := ctr.service.UserInquiryService(c, &model.Users{Username: req.Username})
-	if (*users)[0].Username == "" && err == nil {
-		err = errors.New(" not found ")
-		log.Errorf("Err Login.ctr.service.GetUserService Err > %v", err)
-	}
+	token, err := ctr.service.LoginService(c, &model.Users{
+		Username: req.Username,
+		Password: req.Password,
+	})
 	if err != nil {
-		return utils.BadRequest(err)
-	}
-	user := (*users)[0]
-
-	if err = security.CompareHashingData(user.Password, req.Password); err != nil {
-		return utils.BadRequest(err)
-	}
-	token, err := security.CreateTokens(user)
-	if err != nil {
-		log.Errorf("Err Login.security.CreateTokens Err > ", err)
 		return utils.BadRequest(err)
 	}
 	return utils.SuccessRequest(token)

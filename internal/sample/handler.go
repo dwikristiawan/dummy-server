@@ -9,13 +9,12 @@ import (
 type handler struct {
 	controller Controller
 }
+type Handler interface {
+	SampleHandler(echo.Context) error
+}
 
 func NewHandler(controller Controller) Handler {
 	return &handler{controller: controller}
-}
-
-type Handler interface {
-	SampleHandler(echo.Context) error
 }
 
 func (h handler) SampleHandler(e echo.Context) error {
