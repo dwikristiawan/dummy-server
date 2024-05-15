@@ -92,6 +92,7 @@ func initAuth() auth.Handler {
 			users_svc.NewService(
 				users.NewRepository(database),
 				security.NewJwtService(rootConfig),
+				rootConfig,
 			),
 		),
 	)

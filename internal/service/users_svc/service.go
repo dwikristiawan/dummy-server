@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"mocking-server/config"
 	"mocking-server/internal/model"
 	"mocking-server/internal/repository/postgres/users"
 	"mocking-server/internal/security"
@@ -16,22 +17,23 @@ import (
 type service struct {
 	repository users.Repository
 	jwtService security.JwtService
+	rootConfig *config.Root
 }
 
 func NewService(
 	repository users.Repository,
-	jwtService security.JwtService) Service {
+	jwtService security.JwtService,
+	rootConfig *config.Root) Service {
 	return &service{
 		repository: repository,
-		jwtService: jwtService}
+		jwtService: jwtService,
+		rootConfig: rootConfig}
 }
 
 type Service interface {
-	UserInquiryService(context.Context, *model.Users) (*[]model.Users, error)
 	AddUserService(context.Context, *model.Users) error
-	UpdateUsersService(context.Context, *model.Users) error
-	RemoveUsersService(context.Context, *model.Users) error
 	LoginService(context.Context, *model.Users) (*security.Tokens, error)
+	RefreshTokenService(context.Context, *string) (*security.Tokens, error)
 }
 
 func (svc service) UserInquiryService(c context.Context, req *model.Users) (*[]model.Users, error) {
@@ -90,4 +92,20 @@ func (svc service) LoginService(c context.Context, req *model.Users) (*security.
 		return nil, err
 	}
 	return token, nil
+}
+
+func (svc service) RefreshTokenService(c context.Context, token *string) (*security.Tokens, error) {
+	parseData, err := svc.jwtService.ParseJwt(c, token, []byte(svc.rootConfig.Jwt.RefreshKey))
+	if err != nil {
+		return nil, err
+	}
+	claimData, err := svc.jwtService.JwtClaim(c, parseData)
+	if err != nil {
+		return nil, err
+	}
+	newToken, err := svc.jwtService.CreateTokens(c, claimData)
+	if err != nil {
+		return nil, err
+	}
+	return newToken, nil
 }

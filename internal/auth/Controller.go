@@ -17,13 +17,14 @@ type controller struct {
 type Controller interface {
 	RegisterController(context.Context, *auth_dto.RegisterRequest) *utils.BaseResponse
 	LoginController(context.Context, *auth_dto.LoginRequest) *utils.BaseResponse
+	RefreshTokenController(context.Context, *string) *utils.BaseResponse
 }
 
 func NewController(svc users_svc.Service) Controller {
 	return &controller{service: svc}
 }
 
-func (ctr controller) RegisterController(c context.Context, req *auth_dto.RegisterRequest) *utils.BaseResponse {
+func (ctr *controller) RegisterController(c context.Context, req *auth_dto.RegisterRequest) *utils.BaseResponse {
 	var errstr = ""
 	if req.Username == "" {
 		errstr = " username "
@@ -55,7 +56,7 @@ func (ctr controller) RegisterController(c context.Context, req *auth_dto.Regist
 	return utils.SuccessRequest(nil)
 }
 
-func (ctr controller) LoginController(c context.Context, req *auth_dto.LoginRequest) *utils.BaseResponse {
+func (ctr *controller) LoginController(c context.Context, req *auth_dto.LoginRequest) *utils.BaseResponse {
 	var errstr = ""
 	if req.Username == "" {
 		errstr = " username "
@@ -77,5 +78,11 @@ func (ctr controller) LoginController(c context.Context, req *auth_dto.LoginRequ
 		return utils.BadRequest(err)
 	}
 	return utils.SuccessRequest(token)
-
+}
+func (ctr *controller) RefreshTokenController(c context.Context, token *string) *utils.BaseResponse {
+	newToken, err := ctr.service.RefreshTokenService(c, token)
+	if err != nil {
+		return utils.BadRequest(err)
+	}
+	return utils.SuccessRequest(newToken)
 }
