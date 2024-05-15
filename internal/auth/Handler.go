@@ -9,39 +9,37 @@ import (
 	"github.com/labstack/gommon/log"
 )
 
-type authHandler struct {
-	controller AuthController
+type handler struct {
+	controller Controller
+}
+type Handler interface {
+	RegisterHandler(echo.Context) error
+	LoginHandler(echo.Context) error
 }
 
-func NewAuthHandler(controller AuthController) *authHandler {
-	return &authHandler{controller: controller}
+func NewHandler(ctr Controller) Handler {
+	return &handler{controller: ctr}
 }
 
-type AuthHandler interface {
-	Register(echo.Context) error
-	Login(echo.Context) error
-}
-
-func (h authHandler) Register(e echo.Context) error {
+func (h handler) RegisterHandler(e echo.Context) error {
 	req := new(auth_dto.RegisterRequest)
 
 	if err := e.Bind(&req); err != nil {
-		log.Error("Err Register.e.Bind Err > ", err)
+		log.Errorf("Register.e.Bind Err:  %v", err)
 		return utils.BaseReturn(e, utils.BadRequest(err))
 	}
-	response := h.controller.Register(context.Background(), req)
+	response := h.controller.RegisterController(context.Background(), req)
 	return utils.BaseReturn(e, response)
 
 }
 
-func (h authHandler) Login(e echo.Context) error {
+func (h handler) LoginHandler(e echo.Context) error {
 	req := new(auth_dto.LoginRequest)
 
 	if err := e.Bind(&req); err != nil {
-		log.Error("Err Login.e.Bind Err > ", err)
+		log.Errorf("Err Login.e.Bind Err: %v", err)
 		return utils.BaseReturn(e, utils.BadRequest(err))
 	}
-	response := h.controller.Login(context.Background(), req)
+	response := h.controller.LoginController(context.Background(), req)
 	return utils.BaseReturn(e, response)
-
 }

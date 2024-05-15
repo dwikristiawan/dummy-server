@@ -16,7 +16,7 @@ type repository struct {
 	db *sqlx.DB
 }
 
-func NewRepository(db *sqlx.DB) *repository {
+func NewRepository(db *sqlx.DB) Repository {
 	return &repository{db: db}
 }
 
@@ -62,6 +62,7 @@ func (repo repository) SelectUser(c context.Context, req *model.Users) (*[]model
 			&user.Name,
 			&user.Password,
 			&user.Status,
+			&user.Roles,
 			&user.CreatedAt,
 			&user.UpdatedAt,
 		)
@@ -74,47 +75,42 @@ func (repo repository) InsertUser(c context.Context, req *model.Users) error {
 	var argTmp []interface{}
 
 	curent := time.Now()
-	builder := squirrel.Insert(`users`).PlaceholderFormat(squirrel.Dollar)
-	builder = builder.Columns(`created_at`)
-	argTmp = append(argTmp, curent)
-	builder = builder.Columns(`id`)
-	argTmp = append(argTmp, utils.IdUuid())
+	req.CreatedAt = &curent
+	req.Id = utils.IdUuid()
+	query := `INSERT INTO users (
+		id,
+		username,
+		name,
+		password,
+		roles,
+		status,
+		created_at,
+		updated_at
+		)
+		values(
+			$1,
+			$2,
+			$3,
+			$4,
+			$5,
+			$6,
+			$7,
+			$8
+		)`
+	argTmp = append(argTmp, req.Id)
+	argTmp = append(argTmp, req.Username)
+	argTmp = append(argTmp, req.Name)
+	argTmp = append(argTmp, req.Password)
+	argTmp = append(argTmp, req.Roles)
+	argTmp = append(argTmp, req.Status)
+	argTmp = append(argTmp, req.CreatedAt)
+	argTmp = append(argTmp, req.UpdatedAt)
 
-	if req.Username != "" {
-		builder = builder.Columns(`username`)
-		argTmp = append(argTmp, req.Username)
-	}
-	if req.Name != "" {
-		builder = builder.Columns(`name`)
-		argTmp = append(argTmp, req.Name)
-	}
-	if req.Password != "" {
-		builder = builder.Columns(`password`)
-		argTmp = append(argTmp, req.Password)
-	}
-	if req.Status != "" {
-		builder = builder.Columns(`status`)
-		argTmp = append(argTmp, req.Status)
-
-	}
-	builder = builder.Values(argTmp...)
-
-	query, args, err := builder.ToSql()
-	if err != nil {
-		log.Errorf("Err InsertCollection.builder.ToSql Err > %v", err)
-		return err
-	}
-	_, err = repo.db.ExecContext(c, query, args...)
+	_, err := repo.db.ExecContext(c, query, argTmp...)
 	if err != nil {
 		log.Errorf("Err InsertCollection.repo.db.ExecContext Err > %v", err)
 		return err
 	}
-
-	// if rowsEfect, _ := result.RowsAffected(); rowsEfect > 0 {
-	// 	err := errors.New("noting insert")
-	// 	log.Errorf("Err InserUser.ExecContext Err > %v", err)
-	// 	return err
-	// }
 	return nil
 }
 func (repo repository) UpdateUser(c context.Context, req *model.Users) error {
