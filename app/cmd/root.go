@@ -7,6 +7,7 @@ import (
 	"mocking-server/internal/auth"
 	"mocking-server/internal/repository/postgres/users"
 	"mocking-server/internal/sample"
+	"mocking-server/internal/security"
 	"mocking-server/internal/service/users_svc"
 	"os"
 
@@ -27,7 +28,8 @@ var (
 	database      *sqlx.DB
 	sampleHandler sample.Handler
 	//dummyServerHandler dummyServer.Handler
-	authHandler auth.AuthHandler
+
+	authHandler auth.Handler
 )
 
 func Execute() {
@@ -49,19 +51,11 @@ func configReader() {
 	rootConfig = config.Load(EnvFilePath)
 }
 func initApp() {
-	initSample()
-	//initDummyServer()
-	initAuth()
+	sampleHandler = initSample()
+	authHandler = initAuth()
 
 }
-func initSample() {
-	log.Infof("Initialize sample module")
-	repo := sample.NewRepository(database)
-	service := sample.NewService(repo)
-	controller := sample.NewController(service)
-	sampleHandler = sample.NewHandler(controller)
 
-}
 func initPostgres() {
 	log.Infof("Initialize postgress")
 	var err error
@@ -80,18 +74,26 @@ func initPostgres() {
 	}
 }
 
-// func initDummyServer() {
-// 	log.Infof("Initialize dammyServer module")
-// 	repo := dummyServer.NewRepository(database)
-// 	service := dummyServer.NewService(repo)
-// 	controller := dummyServer.NewController(service)
-// 	dummyServerHandler = dummyServer.NewHandler(controller)
-// }
+func initSample() sample.Handler {
+	log.Infof("Initialize sample module")
+	return sample.NewHandler(
+		sample.NewController(
+			sample.NewService(
+				sample.NewRepository(database),
+			),
+		),
+	)
+}
 
-func initAuth() {
+func initAuth() auth.Handler {
 	log.Infof("Initialize auth")
-	repo := users.NewRepository(database)
-	service := users_svc.NewService(*repo)
-	ctr := auth.NewAuthController(service)
-	authHandler = auth.NewAuthHandler(*ctr)
+	return auth.NewHandler(
+		auth.NewController(
+			users_svc.NewService(
+				users.NewRepository(database),
+				security.NewJwtService(rootConfig),
+				rootConfig,
+			),
+		),
+	)
 }

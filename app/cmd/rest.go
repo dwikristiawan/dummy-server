@@ -29,7 +29,8 @@ func restServer(cmd *cobra.Command, args []string) {
 	}))
 	routh.RouthSample(e, sampleHandler)
 	//routh.RouthDummyServer(e, dummyServerHandler)
-	routh.RouthProfile(e, authHandler)
+	routh.RouthAuth(e, authHandler)
+
 	err := e.Start(rootConfig.Server.HostServer + ":" + rootConfig.Server.PortServer)
 	if err != nil {
 		log.Errorf("Cannot Start the application !!, Err > ", err)

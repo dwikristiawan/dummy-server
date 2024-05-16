@@ -9,6 +9,7 @@ import (
 type Root struct {
 	Server   Server
 	Postgres Postgres
+	Jwt      Jwt
 }
 
 func Load(filenames ...string) *Root {
@@ -19,9 +20,11 @@ func Load(filenames ...string) *Root {
 	r := Root{
 		Server:   Server{},
 		Postgres: Postgres{},
+		Jwt:      Jwt{},
 	}
 	mustLoad("SERVER", &r.Server)
 	mustLoad("POSTGRES", &r.Postgres)
+	mustLoad("JWT", &r.Jwt)
 	return &r
 }
 
