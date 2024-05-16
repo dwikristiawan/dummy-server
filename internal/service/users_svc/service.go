@@ -49,12 +49,15 @@ func (svc service) AddUserService(c context.Context, req *model.Users) error {
 			return err
 		}
 		req.Password = hashedPassword
-		strRole := `{"none": "none"}`
-		jsonRole, err := json.Marshal(strRole)
+		var mapRole model.Roles
+		mapRole.Roles = make(map[string]interface{})
+		mapRole.Roles["none"] = "none"
+		jsonRole, err := json.Marshal(mapRole.Roles)
 		if err != nil {
 			log.Errorf("AddUserService")
 			return err
 		}
+		fmt.Println(string(jsonRole))
 		req.Roles = append(req.Roles, jsonRole...)
 	}
 	err := svc.repository.InsertUser(c, req)
@@ -80,12 +83,18 @@ func (svc service) LoginService(c context.Context, req *model.Users) (*security.
 		log.Errorf("LoginService.CompareHashingData Err: %v, username : %s", err, req.Username)
 		return nil, err
 	}
+	var mapRole model.Roles
+	mapRole.Roles = make(map[string]interface{})
+	err = json.Unmarshal(user.Roles, &mapRole)
+	if err != nil {
+		return nil, err
+	}
 	token, err := svc.jwtService.CreateTokens(c, &security.JwtCustomClaims{
 		Uuid:           uuid.NewString(),
 		Id:             user.Id,
 		Username:       user.Username,
 		Name:           user.Name,
-		Roles:          user.Roles,
+		Roles:          mapRole.Roles,
 		StandardClaims: jwt.StandardClaims{},
 	})
 	if err != nil {
