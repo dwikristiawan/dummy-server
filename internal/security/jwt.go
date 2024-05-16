@@ -2,7 +2,6 @@ package security
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"mocking-server/config"
 	"time"
@@ -27,11 +26,11 @@ type JwtService interface {
 }
 
 type JwtCustomClaims struct {
-	Uuid     string          `json:"uuid"`
-	Id       string          `json:"id"`
-	Username string          `json:"username"`
-	Name     string          `json:"name"`
-	Roles    json.RawMessage `json:"role"`
+	Uuid     string                 `json:"uuid"`
+	Id       string                 `json:"id"`
+	Username string                 `json:"username"`
+	Name     string                 `json:"name"`
+	Roles    map[string]interface{} `json:"role"`
 	jwt.StandardClaims
 }
 type Tokens struct {
@@ -96,16 +95,35 @@ func (svc jwtService) ParseJwt(c context.Context, strJwt *string, key []byte) (*
 
 func (svc jwtService) JwtClaim(c context.Context, token *jwt.Token) (*JwtCustomClaims, error) {
 	if claim, ok := token.Claims.(jwt.MapClaims); ok {
-		claimData := JwtCustomClaims{
-			Uuid:           claim["uuid"].(string),
-			Id:             claim["id"].(string),
-			Username:       claim["username"].(string),
-			Name:           claim["name"].(string),
-			Roles:          claim["roles"].(json.RawMessage),
-			StandardClaims: jwt.StandardClaims{},
+		claimData := JwtCustomClaims{}
+		if uuid, ok := claim["uuid"].(string); ok {
+			claimData.Uuid = uuid
+		} else {
+			return nil, fmt.Errorf("uuid not found or is not a string")
 		}
+		if id, ok := claim["id"].(string); ok {
+			claimData.Id = id
+		} else {
+			return nil, fmt.Errorf("id not found or is not a string")
+		}
+		if username, ok := claim["username"].(string); ok {
+			claimData.Username = username
+		} else {
+			return nil, fmt.Errorf("username not found or is not a string")
+		}
+		if name, ok := claim["name"].(string); ok {
+			claimData.Name = name
+		} else {
+			return nil, fmt.Errorf("name not found or is not a string")
+		}
+		if roles, ok := claim["role"].(map[string]interface{}); ok {
+			claimData.Roles = roles
+		} else {
+			return nil, fmt.Errorf("roles not found or is not a valid json.RawMessage")
+		}
+		claimData.StandardClaims = jwt.StandardClaims{}
 		return &claimData, nil
 	}
-	return nil, fmt.Errorf("failed claims token")
+	return nil, fmt.Errorf("failed to parse claims from token")
 
 }

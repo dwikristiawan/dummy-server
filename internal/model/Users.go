@@ -15,3 +15,6 @@ type Users struct {
 	CreatedAt *time.Time      `json:"created_at"`
 	UpdatedAt *time.Time      `json:"updated_at"`
 }
+type Roles struct {
+	Roles map[string]interface{}
+}
