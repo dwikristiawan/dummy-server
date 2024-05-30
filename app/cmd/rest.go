@@ -29,7 +29,7 @@ func restServer(cmd *cobra.Command, args []string) {
 	}))
 	routh.RouthSample(e, sampleHandler)
 	//routh.RouthDummyServer(e, dummyServerHandler)
-	routh.RouthAuth(e, authHandler)
+	routh.RouthAuth(e, authHandler, middlewareService)
 
 	err := e.Start(rootConfig.Server.HostServer + ":" + rootConfig.Server.PortServer)
 	if err != nil {

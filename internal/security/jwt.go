@@ -56,7 +56,7 @@ func (svc *jwtService) generateToken(c context.Context, user *JwtCustomClaims, k
 }
 
 func (svc jwtService) CreateTokens(c context.Context, user *JwtCustomClaims) (*Tokens, error) {
-	byteSecretKey := []byte(svc.RootConfig.Jwt.RefreshKey)
+	byteSecretKey := []byte(svc.RootConfig.Jwt.SecretKey)
 	byteRefreshKey := []byte(svc.RootConfig.Jwt.RefreshKey)
 	duration, err := time.ParseDuration(svc.RootConfig.Jwt.Expiration)
 	if err != nil {
