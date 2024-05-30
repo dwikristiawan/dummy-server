@@ -21,10 +21,16 @@ func NewRepository(db *sqlx.DB) Repository {
 }
 
 type Repository interface {
+	DBBegin() (*sqlx.Tx, error)
 	SelectUser(context.Context, *model.Users) (*[]model.Users, error)
 	InsertUser(context.Context, *model.Users) error
 	UpdateUser(context.Context, *model.Users) error
 	DeleteUser(context.Context, *model.Users) error
+}
+
+func (repo repository) DBBegin() (*sqlx.Tx, error) {
+	tx, err := repo.db.Beginx()
+	return tx, err
 }
 
 func (repo repository) SelectUser(c context.Context, req *model.Users) (*[]model.Users, error) {
@@ -47,7 +53,7 @@ func (repo repository) SelectUser(c context.Context, req *model.Users) (*[]model
 		return nil, err
 	}
 
-	rows, err := repo.db.QueryContext(c, query, args...)
+	rows, err := repo.db.DB.QueryContext(c, query, args...)
 	if err != nil {
 		log.Errorf("Err SelectUser.QueryxContext Err > %v", err)
 		return nil, err
@@ -106,7 +112,7 @@ func (repo repository) InsertUser(c context.Context, req *model.Users) error {
 	argTmp = append(argTmp, req.CreatedAt)
 	argTmp = append(argTmp, req.UpdatedAt)
 
-	_, err := repo.db.ExecContext(c, query, argTmp...)
+	_, err := repo.db.DB.ExecContext(c, query, argTmp...)
 	if err != nil {
 		log.Errorf("Err InsertCollection.repo.db.ExecContext Err > %v", err)
 		return err
