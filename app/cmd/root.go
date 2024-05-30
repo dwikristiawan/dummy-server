@@ -24,9 +24,10 @@ var (
 	}
 )
 var (
-	rootConfig    *config.Root
-	database      *sqlx.DB
-	sampleHandler sample.Handler
+	rootConfig        *config.Root
+	database          *sqlx.DB
+	middlewareService security.MiddlewareService
+	sampleHandler     sample.Handler
 	//dummyServerHandler dummyServer.Handler
 
 	authHandler auth.Handler
@@ -51,6 +52,7 @@ func configReader() {
 	rootConfig = config.Load(EnvFilePath)
 }
 func initApp() {
+	middlewareService = initMiddleware()
 	sampleHandler = initSample()
 	authHandler = initAuth()
 
@@ -83,6 +85,10 @@ func initSample() sample.Handler {
 			),
 		),
 	)
+}
+func initMiddleware() security.MiddlewareService {
+	log.Infof("Initialize middleware")
+	return security.NewMiddlewareService(security.NewJwtService(rootConfig), rootConfig)
 }
 
 func initAuth() auth.Handler {

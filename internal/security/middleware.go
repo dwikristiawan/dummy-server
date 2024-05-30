@@ -30,7 +30,7 @@ func (svc middlewareService) MiddlewareSecurity(role *map[string]interface{}) ec
 		return func(c echo.Context) error {
 			jwtRequest := c.Request().Header.Get("Authorization")
 			if jwtRequest == "" {
-				c.JSON(echo.ErrUnauthorized.Code, utils.BaseResponse{
+				return c.JSON(echo.ErrUnauthorized.Code, utils.BaseResponse{
 					ResponseCode: echo.ErrUnauthorized.Code,
 					Massage:      echo.ErrUnauthorized.Error(),
 					Data:         nil,
@@ -38,17 +38,17 @@ func (svc middlewareService) MiddlewareSecurity(role *map[string]interface{}) ec
 			}
 			token, err := svc.Jwt.ParseJwt(c.Request().Context(), &jwtRequest, []byte(svc.rootConfig.Jwt.SecretKey))
 			if err != nil || !token.Valid {
-				c.JSON(echo.ErrUnauthorized.Code, utils.BaseResponse{
+				return c.JSON(echo.ErrUnauthorized.Code, utils.BaseResponse{
 					ResponseCode: echo.ErrUnauthorized.Code,
-					Massage:      echo.ErrUnauthorized.Error(),
+					Massage:      err.Error(),
 					Data:         nil,
 				})
 			}
 			claimData, err := svc.Jwt.JwtClaim(c.Request().Context(), token)
 			if err != nil {
-				c.JSON(echo.ErrUnauthorized.Code, utils.BaseResponse{
+				return c.JSON(echo.ErrUnauthorized.Code, utils.BaseResponse{
 					ResponseCode: echo.ErrUnauthorized.Code,
-					Massage:      echo.ErrUnauthorized.Error(),
+					Massage:      err.Error(),
 					Data:         nil,
 				})
 			}
