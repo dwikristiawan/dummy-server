@@ -13,12 +13,17 @@ type repository struct {
 	db *sqlx.DB
 }
 type Reppsitory interface {
+	DBBegin() (*sqlx.Tx, error)
 	InsertMockData(context.Context, *sqlx.Tx, *model.MockData) error
 	SelectMockData(context.Context, *model.MockData) (*[]model.MockData, error)
 }
 
 func NewRepository(db *sqlx.DB) Reppsitory {
 	return &repository{db: db}
+}
+func (repo repository) DBBegin() (*sqlx.Tx, error) {
+	tx, err := repo.db.Beginx()
+	return tx, err
 }
 
 func (repo repository) InsertMockData(c context.Context, tx *sqlx.Tx, req *model.MockData) error {
@@ -33,19 +38,25 @@ func (repo repository) InsertMockData(c context.Context, tx *sqlx.Tx, req *model
 		request_body,
 		response_body,
 		response_code,
-		reference_id
+		reference_id,
 		created_at,
 		updated_at
 	)values(
-		$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,12
+		$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12
 	)`
 
+	req.RequestHeader = nil
 	args = append(args,
 		req.Id,
 		req.ChildrenId,
 		req.RequestMethod,
-		req.Path,
-		req.RequestHeader,
+		req.Path, req.RequestHeader)
+	// if req.RequestHeader == nil {
+	// 	args = append(args, "{}")
+	// } else {
+	// 	args = append(args, req.RequestHeader)
+	// }
+	args = append(args,
 		req.ResponseHeader,
 		req.RequestBody,
 		req.ResponseBody,
@@ -53,7 +64,6 @@ func (repo repository) InsertMockData(c context.Context, tx *sqlx.Tx, req *model
 		req.ReferenceId,
 		req.CreatedAt,
 		req.UpdatedAt)
-
 	_, err := tx.ExecContext(c, query, args...)
 	if err != nil {
 		tx.Rollback()
@@ -73,7 +83,7 @@ func (repo repository) SelectMockData(c context.Context, req *model.MockData) (*
 	request_body,
 	response_body,
 	response_code,
-	reference_id
+	reference_id,
 	created_at,
 	updated_at`).From(`mock_data`).PlaceholderFormat(squirrel.Dollar)
 	if req.Id != "" {
@@ -102,7 +112,7 @@ func (repo repository) SelectMockData(c context.Context, req *model.MockData) (*
 	var mockDatas []model.MockData
 	for rows.Next() {
 		var mockData model.MockData
-		rows.Scan(
+		err = rows.Scan(
 			&mockData.Id,
 			&mockData.ChildrenId,
 			&mockData.RequestMethod,

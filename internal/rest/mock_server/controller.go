@@ -18,7 +18,7 @@ type controller struct {
 type Controller interface {
 	AddWorkSapceController(context.Context, *mockserverdto.AddWorkSapcerequest) *utils.BaseResponse
 	SetMockDataController(context.Context, *mockserverdto.SetMockDataRequest) *utils.BaseResponse
-	MatchMockController(context.Context, *string, *string, *http.Header, *[]byte) (int, *http.ResponseWriter, *[]byte, error)
+	MatchMockController(context.Context, *string, *string, *http.Header, *[]byte) (int, *map[string]string, *[]byte, error)
 }
 
 func NewController(service mockserversvc.Service) Controller {
@@ -68,13 +68,15 @@ func (ctr controller) SetMockDataController(c context.Context, req *mockserverdt
 	if len(errStr) > 0 {
 		return utils.BadRequest(fmt.Errorf("%v", errStr))
 	}
+	reqHeader := req.Reqeust.RequestHeader
+	resHeader := req.Response.ResponseHeader
 	err := ctr.service.AddMockDataService(c, &model.MockData{
 		Id:             "",
 		ChildrenId:     req.ChildrenId,
 		RequestMethod:  req.Reqeust.RequestMethod,
 		Path:           req.Reqeust.Path,
-		RequestHeader:  req.Reqeust.RequestHeader,
-		ResponseHeader: req.Response.ResponseHeader,
+		RequestHeader:  &reqHeader,
+		ResponseHeader: &resHeader,
 		RequestBody:    req.Reqeust.RequestBody,
 		ResponseBody:   req.Response.ResponseBody,
 		ResponseCode:   req.Response.ResponseCode,
@@ -85,10 +87,10 @@ func (ctr controller) SetMockDataController(c context.Context, req *mockserverdt
 	if err != nil {
 		return utils.ErrorServerRequest(err)
 	}
-	return nil
+	return utils.SuccessRequest(nil)
 }
 
-func (ctr controller) MatchMockController(c context.Context, method *string, path *string, header *http.Header, body *[]byte) (int, *http.ResponseWriter, *[]byte, error) {
+func (ctr controller) MatchMockController(c context.Context, method *string, path *string, header *http.Header, body *[]byte) (int, *map[string]string, *[]byte, error) {
 	if *method == "" || *path == "" || header == nil {
 		return http.StatusInternalServerError, nil, nil, fmt.Errorf("internal server error")
 	}

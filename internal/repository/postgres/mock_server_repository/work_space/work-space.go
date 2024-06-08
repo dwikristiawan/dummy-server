@@ -14,6 +14,7 @@ type repository struct {
 
 type Reppsitory interface {
 	InsertWorkSpace(context.Context, *sqlx.Tx, *model.WorkSpace) error
+	DBBegin() (*sqlx.Tx, error)
 }
 
 func NewRepository(db *sqlx.DB) Reppsitory {
@@ -22,6 +23,10 @@ func NewRepository(db *sqlx.DB) Reppsitory {
 	}
 }
 
+func (repo repository) DBBegin() (*sqlx.Tx, error) {
+	tx, err := repo.db.Beginx()
+	return tx, err
+}
 func (repo repository) InsertWorkSpace(c context.Context, tx *sqlx.Tx, req *model.WorkSpace) error {
 	query :=
 		`INSERT INTO work_space(

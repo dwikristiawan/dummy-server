@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"mocking-server/internal"
 	"mocking-server/internal/model"
-	"mocking-server/internal/repository/postgres"
 	"mocking-server/internal/repository/postgres/member"
 	mockdata "mocking-server/internal/repository/postgres/mock_server_repository/mock_data"
 	workspace "mocking-server/internal/repository/postgres/mock_server_repository/work_space"
@@ -19,7 +18,6 @@ import (
 )
 
 type service struct {
-	repository          postgres.Reppsitory
 	workspaceRepository workspace.Reppsitory
 	memberRepository    member.Reppsitory
 	mockDataRepository  mockdata.Reppsitory
@@ -28,11 +26,10 @@ type Service interface {
 	AddWorkSapceService(context.Context, *model.WorkSpace) error
 	AddMemberService(context.Context, *model.Member) error
 	AddMockDataService(context.Context, *model.MockData) error
-	MatchMockService(context.Context, *string, *string, *http.Header, *[]byte) (int, *http.ResponseWriter, *[]byte, error)
+	MatchMockService(context.Context, *string, *string, *http.Header, *[]byte) (int, *map[string]string, *[]byte, error)
 }
 
 func NewService(
-	repository postgres.Reppsitory,
 	workspaceRepository workspace.Reppsitory,
 	memberRepository member.Reppsitory,
 	mockDataRepository mockdata.Reppsitory) Service {
@@ -42,7 +39,7 @@ func NewService(
 		mockDataRepository:  mockDataRepository}
 }
 func (svc service) AddWorkSapceService(c context.Context, req *model.WorkSpace) error {
-	tx, err := svc.repository.DBBegin()
+	tx, err := svc.workspaceRepository.DBBegin()
 	if err != nil {
 		log.Errorf("AddWorkSapceService.svc.repository.DBBegin() Err: %v", err)
 		return err
@@ -94,14 +91,17 @@ func (svc service) AddMemberService(c context.Context, req *model.Member) error 
 }
 
 func (svc service) AddMockDataService(c context.Context, req *model.MockData) error {
-
-	tx, err := svc.repository.DBBegin()
+	_, err := svc.mockDataRepository.DBBegin()
+	fmt.Println(err)
+	tx, err := svc.mockDataRepository.DBBegin()
+	fmt.Println("debug svc2")
 	if err != nil {
 		return err
 	}
 	curentTime := time.Now()
 
 	req.CreatedAt = &curentTime
+	req.UpdatedAt = nil
 	req.Id = utils.IdUuid()
 	req.ReferenceId = fmt.Sprint(c.Value(internal.USER_ID))
 	err = svc.mockDataRepository.InsertMockData(c, tx, req)
@@ -109,10 +109,12 @@ func (svc service) AddMockDataService(c context.Context, req *model.MockData) er
 		tx.Rollback()
 		return err
 	}
+	tx.Commit()
 	return nil
 }
 
-func (svc service) MatchMockService(c context.Context, method *string, path *string, header *http.Header, body *[]byte) (int, *http.ResponseWriter, *[]byte, error) {
+func (svc service) MatchMockService(c context.Context, method *string, path *string, header *http.Header, body *[]byte) (int, *map[string]string, *[]byte, error) {
+
 	var base64Body string
 	if body != nil {
 		base64Body = base64.RawStdEncoding.EncodeToString(*body)
@@ -136,29 +138,30 @@ func (svc service) MatchMockService(c context.Context, method *string, path *str
 	for _, mockData := range *mockDatas {
 		if mockData.RequestHeader == nil {
 			resMockData = mockData
-		}
-		var tmpCount int
-		var headerMock map[string]string
-		err := json.Unmarshal(mockData.RequestHeader, &headerMock)
-		if err != nil {
-			return http.StatusInternalServerError, nil, nil, err
-		}
-
-		ismatch = true
-		for key, value := range headerMock {
-			reqValue := header.Get(key)
-			if reqValue != value {
-				ismatch = false
+		} else {
+			var tmpCount int
+			var headerMock map[string]string
+			err := json.Unmarshal(*mockData.RequestHeader, &headerMock)
+			if err != nil {
+				return http.StatusInternalServerError, nil, nil, err
 			}
-			tmpCount = tmpCount + 1
-		}
 
-		if count < tmpCount {
-			count = tmpCount
-		}
+			ismatch = true
+			for key, value := range headerMock {
+				reqValue := header.Get(key)
+				if reqValue != value {
+					ismatch = false
+				}
+				tmpCount = tmpCount + 1
+			}
 
-		if ismatch {
-			resMockData = mockData
+			if count < tmpCount {
+				count = tmpCount
+			}
+
+			if ismatch {
+				resMockData = mockData
+			}
 		}
 
 	}
@@ -169,25 +172,24 @@ func (svc service) MatchMockService(c context.Context, method *string, path *str
 	}
 
 	var responseHeader map[string]string
-	var responseWriter http.ResponseWriter
 
-	err = json.Unmarshal(resMockData.ResponseHeader, &responseHeader)
+	err = json.Unmarshal(*resMockData.ResponseHeader, &responseHeader)
 	if err != nil {
 		log.Errorf("setResponseMatcher.json.Unmarshal Err: %v", err)
 		return http.StatusInternalServerError, nil, nil, err
 	}
 	if len(responseHeader) < 1 {
 		err = fmt.Errorf("header not found")
-		log.Errorf("setResponseMatcher.len(responseHeader) < 1   Err: %v", err)
+		log.Errorf("setResponseMatcher.len(responseHeader) Err: %v", err)
 		return http.StatusBadRequest, nil, nil, err
 	}
-	for key, value := range responseHeader {
-		responseWriter.Header().Set(key, value)
-	}
-	byteBody, err := base64.RawStdEncoding.DecodeString(resMockData.ResponseBody)
+	decodedLen := base64.RawStdEncoding.DecodedLen(len(resMockData.ResponseBody))
+	byteBody := make([]byte, decodedLen)
+	_, err = base64.StdEncoding.Decode(byteBody, []byte(resMockData.ResponseBody))
 	if err != nil {
+		log.Errorf("setResponseMatcher.base64.RawStdEncoding.DecodeString Err: %v", err)
 		return http.StatusInternalServerError, nil, nil, err
 	}
-	return resMockData.ResponseCode, &responseWriter, &byteBody, nil
+	return resMockData.ResponseCode, &responseHeader, &byteBody, nil
 
 }

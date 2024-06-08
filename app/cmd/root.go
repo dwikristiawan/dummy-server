@@ -1,11 +1,9 @@
 package cmd
 
 import (
-	"mocking-server/config"
-
 	"fmt"
+	"mocking-server/config"
 	"mocking-server/internal/auth"
-	"mocking-server/internal/repository/postgres"
 	"mocking-server/internal/repository/postgres/member"
 	mockdata "mocking-server/internal/repository/postgres/mock_server_repository/mock_data"
 	workspace "mocking-server/internal/repository/postgres/mock_server_repository/work_space"
@@ -59,7 +57,7 @@ func configReader() {
 	rootConfig = config.Load(EnvFilePath)
 }
 func initApp() {
-	middlewareService = initMidleware()
+	middlewareService = initMiddleware()
 	sampleHandler = initSample()
 	authHandler = initAuth()
 	mockserverHandler = initMockServer()
@@ -94,6 +92,10 @@ func initSample() sample.Handler {
 		),
 	)
 }
+func initMiddleware() security.MiddlewareService {
+	log.Infof("Initialize middleware")
+	return security.NewMiddlewareService(security.NewJwtService(rootConfig), rootConfig)
+}
 
 func initAuth() auth.Handler {
 	log.Infof("Initialize auth")
@@ -112,7 +114,6 @@ func initMockServer() mockserver.Handler {
 	return mockserver.NewHandler(
 		mockserver.NewController(
 			mockserversvc.NewService(
-				postgres.NewRepository(database),
 				workspace.NewRepository(database),
 				member.NewRepository(database),
 				mockdata.NewRepository(database),

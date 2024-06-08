@@ -1,6 +1,8 @@
 package mockserver
 
 import (
+	"bytes"
+	"fmt"
 	"io/ioutil"
 	mockserverdto "mocking-server/internal/dto/mock_server_dto"
 	"mocking-server/utils"
@@ -42,6 +44,7 @@ func (h handler) AddWorkSapceHandler(e echo.Context) error {
 
 func (h handler) SetMockDataHandler(e echo.Context) error {
 	req := new(mockserverdto.SetMockDataRequest)
+
 	err := e.Bind(&req)
 	if err != nil {
 		return e.JSON(echo.ErrBadRequest.Code, utils.BadRequest(err))
@@ -58,12 +61,16 @@ func (h handler) MatchMockHandler(e echo.Context) error {
 	method := e.Request().Method
 	path := e.Request().URL.Path
 
-	resCode, resWriter, resbody, err := h.Controller.MatchMockController(e.Request().Context(), &method, &path, &header, &body)
+	resCode, resheader, resbody, err := h.Controller.MatchMockController(e.Request().Context(), &method, &path, &header, &body)
 	if err != nil {
-		return e.JSON(resCode, err)
+		return e.JSON(resCode, err.Error())
 	}
-	e.Response().Writer = *resWriter
+	for key, value := range *resheader {
+		e.Response().Header().Add(key, value)
+	}
 	e.Response().Status = resCode
-	_, err = e.Response().Writer.Write(*resbody)
-	return err
+	headerRes := *resheader
+	byteReaderBody := bytes.NewReader(*resbody)
+	fmt.Println(headerRes[echo.HeaderContentType])
+	return e.Stream(resCode, headerRes[echo.HeaderContentType], byteReaderBody)
 }
