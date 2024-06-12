@@ -23,21 +23,22 @@ func NewRepository(db *sqlx.DB) Reppsitory {
 }
 func (repo repository) InsertMember(c context.Context, tx *sqlx.Tx, req *model.Member) error {
 	query := `
-	INSERT INTO member(
+	INSERT INTO members(
 		id,
-		type_id,
+	    workspace_id,
 		user_id,
 		access,
-		is_acctive,
+		is_active,
 		created_at,
 		updated_at
 	)
 	values(
-		$1,$2,$3,$4,$5,$6,$7,$8
+		$1,$2,$3,$4,$5,$6,$7
 	)`
 	var args []interface{}
 	args = append(args,
 		req.Id,
+		req.WorkspaceId,
 		req.UserId,
 		req.Access,
 		req.IsActive,

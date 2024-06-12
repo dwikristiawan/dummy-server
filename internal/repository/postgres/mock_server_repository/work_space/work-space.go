@@ -15,6 +15,7 @@ type repository struct {
 type Reppsitory interface {
 	InsertWorkSpace(context.Context, *sqlx.Tx, *model.WorkSpace) error
 	DBBegin() (*sqlx.Tx, error)
+	SelectWorkSpaceByMemberId(context.Context, *string) (*[]model.WorkSpace, error)
 }
 
 func NewRepository(db *sqlx.DB) Reppsitory {
@@ -29,7 +30,7 @@ func (repo repository) DBBegin() (*sqlx.Tx, error) {
 }
 func (repo repository) InsertWorkSpace(c context.Context, tx *sqlx.Tx, req *model.WorkSpace) error {
 	query :=
-		`INSERT INTO work_space(
+		`INSERT INTO workspaces(
 		 id,
 		 name,
 		 reference_id,
@@ -58,4 +59,18 @@ func (repo repository) InsertWorkSpace(c context.Context, tx *sqlx.Tx, req *mode
 		return err
 	}
 	return nil
+}
+func (repo repository) SelectWorkSpaceByMemberId(c context.Context, id *string) (*[]model.WorkSpace, error) {
+	query := `SELECT ws.id,ws.name,ws.reference_id,ws.created_at,ws.updated_at FROM workspaces ws join members m on m.workspace_id = ws.id WHERE  m.user_id= $1`
+	rows, err := repo.db.Queryx(query, *id)
+	if err != nil {
+		return nil, err
+	}
+	var workspaces []model.WorkSpace
+	for rows.Next() {
+		var workSpace model.WorkSpace
+		rows.StructScan(&workSpace)
+		workspaces = append(workspaces, workSpace)
+	}
+	return &workspaces, nil
 }

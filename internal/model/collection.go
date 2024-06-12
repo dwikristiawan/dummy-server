@@ -7,24 +7,26 @@ import (
 
 type Collection struct {
 	Id          string     `json:"id"`
-	Name        string     `json:"name"`
-	WorkSpaceId string     `json:"work_space"`
+	WorkspaceId string     `json:"workspace_id"`
 	ReferenceId string     `json:"reference_id"`
 	CreatedAt   *time.Time `json:"created_at"`
 	UpdatedAt   *time.Time `json:"updated_at"`
 }
 
 type Children struct {
-	Id           string `json:"id"`
-	CollectionId string `json:"collection"`
-	Name         string `json:"name"`
-	Types        Types  `json:"types"`
-	ChildrenId   string
+	Id           string     `json:"id"`
+	CollectionId string     `json:"collection"`
+	Name         string     `json:"name"`
+	Perent       string     `json:"perent"`
+	ReferenceId  string     `json:"reference_id"`
+	CreatedAt    *time.Time `json:"created_at"`
+	UpdatedAt    *time.Time `json:"updated_at"`
 }
 
 type MockData struct {
 	Id             string           `json:"id"`
 	ChildrenId     string           `json:"children_id"`
+	CollectionId   string           `json:"collection_id"`
 	RequestMethod  RequestMethod    `json:"request_method"`
 	Path           string           `json:"path"`
 	RequestHeader  *json.RawMessage `json:"request_header"`

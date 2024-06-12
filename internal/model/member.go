@@ -4,7 +4,7 @@ import "time"
 
 type Member struct {
 	Id          string          `json:"id"`
-	WorkSpaceId string          `json:"work_space"`
+	WorkspaceId string          `json:"workspace_id"`
 	UserId      string          `json:"user_id"`
 	Access      AccessWorkSpace `json:"access"`
 	IsActive    bool            `json:"is_active"`

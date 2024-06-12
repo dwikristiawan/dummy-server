@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"mocking-server/config"
 	"mocking-server/internal/auth"
-	"mocking-server/internal/repository/postgres/member"
+	"mocking-server/internal/repository/postgres"
+	"mocking-server/internal/repository/postgres/mock_server_repository/children"
+	"mocking-server/internal/repository/postgres/mock_server_repository/collection"
+	"mocking-server/internal/repository/postgres/mock_server_repository/member"
 	mockdata "mocking-server/internal/repository/postgres/mock_server_repository/mock_data"
 	workspace "mocking-server/internal/repository/postgres/mock_server_repository/work_space"
 	"mocking-server/internal/repository/postgres/users"
@@ -114,9 +117,12 @@ func initMockServer() mockserver.Handler {
 	return mockserver.NewHandler(
 		mockserver.NewController(
 			mockserversvc.NewService(
+				postgres.NewRepository(database),
 				workspace.NewRepository(database),
 				member.NewRepository(database),
 				mockdata.NewRepository(database),
+				collection.NewRepository(database),
+				children.NewRepository(database),
 			),
 		))
 }
