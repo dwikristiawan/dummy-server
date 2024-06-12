@@ -5,24 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2e0a583c-4e00-4468-99ae-73a0ae47ffa9" name="Changes" comment="refaktoring">
-      <change afterPath="$PROJECT_DIR$/.idea/sqldialects.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/db.sql" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/internal/dto/mock_server_dto/response/response.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/internal/repository/postgres/mock_server_repository/children/children.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/internal/repository/postgres/mock_server_repository/collection/collection.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/internal/repository/postgres/postgres.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apiSpeck.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/cmd/root.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/cmd/root.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/dto/mock_server_dto/request.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/dto/mock_server_dto/request/request.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/model/collection.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/model/collection.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/model/member.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/model/member.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/repository/postgres/member/member.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/repository/postgres/mock_server_repository/member/member.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/repository/postgres/mock_server_repository/mock_data/mock_data.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/repository/postgres/mock_server_repository/mock_data/mock_data.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/repository/postgres/mock_server_repository/work_space/work-space.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/repository/postgres/mock_server_repository/work_space/work-space.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/rest/mock_server/controller.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/rest/mock_server/controller.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/rest/mock_server/handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/rest/mock_server/handler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/service/mockserver_svc/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/service/mockserver_svc/service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/routh/routh.go" beforeDir="false" afterPath="$PROJECT_DIR$/routh/routh.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -33,6 +17,8 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Go File" />
+        <option value="package.json" />
+        <option value="OpenAPI" />
       </list>
     </option>
   </component>

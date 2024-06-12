@@ -1,0 +1,166 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Mocking Server",
+    "description": "Api for create dummy server, set request and set the response such us json, xml, csv, or file ",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8080"
+    }
+  ],
+  "paths": {
+    "/mockers/v1/auth/register": {
+      "post": {
+        "summary": "Register",
+        "operationId": "registerUser",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ResponseCode": {
+                      "type": "integer"
+                    },
+                    "Message": {
+                      "type": "string"
+                    },
+                    "Data":{
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mockers/v1/auth/login": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ResponseCode": {
+                      "type": "integer"
+                    },
+                    "Message": {
+                      "type": "string"
+                    },
+                    "Data":{
+                      "type": "object",
+                      "properties": {
+                        "access_key": {
+                          "type": "string"
+                        },
+                        "refresh_key": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      },
+    "/mockers/v1/auth/refresh-access": {
+      "get": {
+        "summary": "Refresh Token",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ResponseCode": {
+                      "type": "integer"
+                    },
+                    "Message": {
+                      "type": "string"
+                    },
+                    "Data": {
+                      "type": "object",
+                      "properties": {
+                        "access_key": {
+                          "type": "string"
+                        },
+                        "refresh_key": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password",
+          "name"
+        ]
+      }
+    }
+  }
+}
