@@ -52,7 +52,7 @@ func (svc middlewareService) MiddlewareSecurity(role *map[string]interface{}) ec
 					Data:         nil,
 				})
 			}
-			ctx := context.WithValue(c.Request().Context(), internal.USER, claimData)
+			ctx := context.WithValue(c.Request().Context(), internal.USER_ID, claimData.Id)
 			c.SetRequest(c.Request().WithContext(ctx))
 
 			return next(c)

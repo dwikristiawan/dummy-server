@@ -1,7 +1,7 @@
 package routh
 
 import (
-	"mocking-server/internal/sample"
+	"mocking-server/internal/rest/sample"
 
 	"github.com/labstack/echo/v4"
 )

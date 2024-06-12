@@ -1,13 +1,20 @@
 package cmd
 
 import (
-	"mocking-server/config"
-
 	"fmt"
+	"mocking-server/config"
 	"mocking-server/internal/auth"
+	"mocking-server/internal/repository/postgres"
+	"mocking-server/internal/repository/postgres/mock_server_repository/children"
+	"mocking-server/internal/repository/postgres/mock_server_repository/collection"
+	"mocking-server/internal/repository/postgres/mock_server_repository/member"
+	mockdata "mocking-server/internal/repository/postgres/mock_server_repository/mock_data"
+	workspace "mocking-server/internal/repository/postgres/mock_server_repository/work_space"
 	"mocking-server/internal/repository/postgres/users"
-	"mocking-server/internal/sample"
+	mockserver "mocking-server/internal/rest/mock_server"
+	"mocking-server/internal/rest/sample"
 	"mocking-server/internal/security"
+	mockserversvc "mocking-server/internal/service/mockserver_svc"
 	"mocking-server/internal/service/users_svc"
 	"os"
 
@@ -24,13 +31,14 @@ var (
 	}
 )
 var (
-	rootConfig        *config.Root
-	database          *sqlx.DB
-	middlewareService security.MiddlewareService
-	sampleHandler     sample.Handler
+	rootConfig    *config.Root
+	database      *sqlx.DB
+	sampleHandler sample.Handler
 	//dummyServerHandler dummyServer.Handler
 
-	authHandler auth.Handler
+	authHandler       auth.Handler
+	mockserverHandler mockserver.Handler
+	middlewareService security.MiddlewareService
 )
 
 func Execute() {
@@ -55,6 +63,7 @@ func initApp() {
 	middlewareService = initMiddleware()
 	sampleHandler = initSample()
 	authHandler = initAuth()
+	mockserverHandler = initMockServer()
 
 }
 
@@ -102,4 +111,22 @@ func initAuth() auth.Handler {
 			),
 		),
 	)
+}
+
+func initMockServer() mockserver.Handler {
+	return mockserver.NewHandler(
+		mockserver.NewController(
+			mockserversvc.NewService(
+				postgres.NewRepository(database),
+				workspace.NewRepository(database),
+				member.NewRepository(database),
+				mockdata.NewRepository(database),
+				collection.NewRepository(database),
+				children.NewRepository(database),
+			),
+		))
+}
+
+func initMidleware() security.MiddlewareService {
+	return security.NewMiddlewareService(security.NewJwtService(rootConfig), rootConfig)
 }
